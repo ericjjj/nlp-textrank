@@ -11,7 +11,7 @@ except:
 import codecs
 from libs import Summary
 
-text = codecs.open('./test/03.txt', 'r', 'utf-8').read()
+text = codecs.open('./test/01.txt', 'r', 'utf-8').read()
 
 s = Summary()
 s.analyze(text=text, lower=True, source = 'all_filters')

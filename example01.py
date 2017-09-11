@@ -9,14 +9,11 @@ except:
     pass
 
 import codecs
-from libs import Summary
+from libs import TextRank
 
-text = codecs.open('./test/01.txt', 'r', 'utf-8').read()
+text = codecs.open('./test/02.txt', 'r', 'utf-8').read()
+w = TextRank()
+rank = w.analyze(text)
 
-s = Summary()
-s.analyze(text=text, lower=True, source = 'all_filters')
-
-print()
-print( '摘要：' )
-for item in s.get_key_sentences(num=3):
-    print(item.index, item.weight, item.sentence)
+for item in rank:
+   print(item.word, item.weight)

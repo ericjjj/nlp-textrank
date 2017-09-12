@@ -6,12 +6,17 @@ import codecs
 import math
 import numpy as np
 import re
+import operator
 
 pos_tags      = ['an', 'i', 'j', 'l', 'n', 'nr', 'nrfg', 'ns', 'nt', 'nz', 't', 'v', 'vd', 'vn', 'eng']
 delimiters = ['?', '!', ';', '？', '！', '。', '；', '……', '…', '\n']
 stop_words    = []
 filter_postag = lambda l: list(filter(lambda x: x.flag in pos_tags, l))
 unique_list   = lambda x,y:x if y in x else x + [y]
+k1 = 1.5
+b = 0.75
+
+d = 0.85
 
 class AttrDict(dict):
     """Dict that can get attribute by dot"""
@@ -39,42 +44,85 @@ class TextRank(object):
   def abstract(self, text):
     text = re.split('，|。|\n', text.encode("utf-8"))
     text = [w for w in text if len(w)>0]
-    cut = []
-    print '原文: \n', "\n".join(text)
+    docs = []
+    # print '原文: \n', "\n".join(text)
     for item in text:
-      cut.append(preprocess(item, self.stop_words))
-    group = sum(cut, [])
-    scores = []
+      docs.append(preprocess(item, self.stop_words))
 
-    k1 = 2
-    b = 0.75
-    avg_dl = sum([len(item) for item in cut]) / len(cut)
-    print avg_dl
-    for d in cut:
-      idf_arr = []
-      r_arr = []
-      dl = len(d)
-      K = k1 * (1 - b + b * (dl / avg_dl))
-      s = 0
-      for qi in d:
-        n = len([item for item in group if qi == item])
-        idf = math.log(len(cut) - n + 0.5) - math.log(n + 0.5)
-        idf_arr.append(idf)
-        # print idf
-        fi = len([item for item in d if item == qi])
-        r = fi * (k1 + 1) / (fi + K)
-        s += r
-      print s, ', '.join(d)
-      # s = sum(np.array(idf_arr) * np.array(r_arr))
-      # scores.append(s)
-    # for i in range(len(text)):
-      # print scores[i], ': ', text[i]
+    D = len(docs)
+    avgdl = 0
+    for seg in docs:
+      avgdl += len(seg)
+    avgdl /= D
 
-    # def sim():
-    #   pass
+    f = list(range(D))
+    df = {}
+    idf = {}
+    index = 0
+    scores = list(range(D))
+    for seg in docs:
+      tf = {}
+      for word in seg:
+        freq = (1 if tf.get(word) is None else tf.get(word) + 1)
+        tf[word] = freq
+      f[index] = tf
+      for word in tf:
+        freq = (1 if df.get(word) is None else df.get(word) + 1)
+        df[word] = freq
+      index += 1
+    for word in df:
+      freq = df.get(word)
+      idf[word] = math.log(D - freq + 0.5) - math.log(freq + 0.5)
+      # print word, idf[word]
 
-    # def simAll():
-    #   pass
+    weight = list(range(D))
+    weight_sum = list(range(D))
+    vertex = list(range(D))
+    top = {}
+    for i in range(len(docs)):
+      scores = simAll(len(docs), docs[i], idf, f, avgdl)
+      weight[i] = scores
+      weight_sum[i] = sum(scores) - scores[i]
+      vertex[i] = 1.0
+      # print scores
+
+    for _ in range(100):
+      m = list(range(D))
+      for i in range(D):
+        temp = 0.0
+        for j in range(D):
+          if (i == j or weight_sum[j] == 0):
+            continue
+          temp += float(d) * float(weight[j][i]) / float(weight_sum[j]) * float(vertex[j])
+        m[i] = 1 - d + temp
+      vertex = m
+    print vertex
+    # for i in range(D):
+      # top[vertex[i]] = i
+    # t = top.keys()
+    # t.sort(cmp=my_cmp)
+    # print t
+    # print sorted(top.items(), key=operator.itemgetter(0), reverse=True)
+    # t = [(k,top[k]) for k in sorted(top.keys())]
+    # print t
+
+
+def sim(seg, i, idf, f, avgdl):
+  score = 0
+  for word in seg:
+    if f[i].get(word) is None:
+      continue
+    d = len(seg)
+    wf = f[i].get(word)
+    score += (idf.get(word) * wf * (k1 + 1) / (wf + k1 * (1 - b + b * d / avgdl)))
+  return score
+
+def simAll(D, seg, idf, f, avgdl):
+  scores = list(range(D))
+  for i in range(D):
+    scores[i] = sim(seg, i, idf, f, avgdl)
+  return scores
+
 
 # 预处理
 def preprocess(text, stop_words):
@@ -88,7 +136,7 @@ def preprocess(text, stop_words):
   text = [w for w in text if len(w)>0]
   # 去除停用词
   text = [word.strip() for word in text if word.strip() not in stop_words]
-  # print ', '.join(text)
+  print ', '.join(text)
   return text
 
 # 摘要图
@@ -147,4 +195,14 @@ def textRank(graph, d=0.85):
 def get_default_stop_words_file():
     d = os.path.dirname(os.path.realpath(__file__))
     return os.path.join(d, 'stopwords.txt')
+
+def my_cmp(x, y):
+    temp = y - x
+    print x, y, temp
+    if temp > 0:
+        return 1
+    elif temp == 0:
+        return 0
+    else:
+        return -1
 

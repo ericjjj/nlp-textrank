@@ -1,92 +1,20 @@
-import gensim
-from gensim import corpora
-import math
-
-class BM25 :
-    def __init__(self, fn_docs, delimiter='|') :
-        self.dictionary = corpora.Dictionary()
-        self.DF = {}
-        self.delimiter = delimiter
-        self.DocTF = []
-        self.DocIDF = {}
-        self.N = 0
-        self.DocAvgLen = 0
-        self.fn_docs = fn_docs
-        self.DocLen = []
-        self.buildDictionary()
-        self.TFIDF_Generator()
-
-    def buildDictionary(self) :
-        raw_data = []
-        for line in file(self.fn_docs) :
-            raw_data.append(line.strip().split(self.delimiter))
-        self.dictionary.add_documents(raw_data)
-
-    def TFIDF_Generator(self, base=math.e) :
-        docTotalLen = 0
-        for line in file(self.fn_docs) :
-            doc = line.strip().split(self.delimiter)
-            docTotalLen += len(doc)
-            self.DocLen.append(len(doc))
-            #print self.dictionary.doc2bow(doc)
-            bow = dict([(term, freq*1.0/len(doc)) for term, freq in self.dictionary.doc2bow(doc)])
-            for term, tf in bow.items() :
-                if term not in self.DF :
-                    self.DF[term] = 0
-                self.DF[term] += 1
-            self.DocTF.append(bow)
-            self.N = self.N + 1
-        for term in self.DF:
-            self.DocIDF[term] = math.log((self.N - self.DF[term] +0.5) / (self.DF[term] + 0.5), base)
-        self.DocAvgLen = docTotalLen / self.N
-
-    def BM25Score(self, Query=[], k1=1.5, b=0.75) :
-        query_bow = self.dictionary.doc2bow(Query)
-        scores = []
-        for idx, doc in enumerate(self.DocTF) :
-            commonTerms = set(dict(query_bow).keys()) & set(doc.keys())
-            tmp_score = []
-            doc_terms_len = self.DocLen[idx]
-            for term in commonTerms :
-                upper = (doc[term] * (k1+1))
-                below = ((doc[term]) + k1*(1 - b + b*doc_terms_len/self.DocAvgLen))
-                tmp_score.append(self.DocIDF[term] * upper / below)
-            scores.append(sum(tmp_score))
-        return scores
-
-    def TFIDF(self) :
-        tfidf = []
-        for doc in self.DocTF :
-            doc_tfidf  = [(term, tf*self.DocIDF[term]) for term, tf in doc.items()]
-            doc_tfidf.sort()
-            tfidf.append(doc_tfidf)
-        return tfidf
-
-    def Items(self) :
-        # Return a list [(term_idx, term_desc),]
-        items = self.dictionary.items()
-        items.sort()
-        return items
-
-if __name__ == '__main__' :
-    #mycorpus.txt is as following:
-    '''
-    Human machine interface for lab abc computer applications
-    A survey of user opinion of computer system response time
-    The EPS user interface management system
-    System and human system engineering testing of EPS
-    Relation of user perceived response time to error measurement
-    The generation of random binary unordered trees
-    The intersection graph of paths in trees
-    Graph IV Widths of trees and well quasi ordering
-    Graph minors A survey
-    '''
-    fn_docs = './test/03.txt'
-    bm25 = BM25(fn_docs, delimiter=' ')
-    Query = 'The intersection graph of paths in trees survey Graph'
-    Query = Query.split()
-    scores = bm25.BM25Score(Query)
-    tfidf = bm25.TFIDF()
-    print bm25.Items()
-    for i, tfidfscore in enumerate(tfidf):
-        print i, tfidfscore
+13.4053034787 算法可大致分为基本算法、数据结构的算法、数论算法、计算几何的算法、图的算法、动态规划以及数值分析、加密算法、排序算法、检索算法、随机化算法、并行算法、厄米变形模型、随机森林算法
+7.62672909711 算法可以宽泛的分为三类
+0 一
+4.47948427418 有限的确定性算法
+7.05908202039 这类算法在有限的一段时间内终止
+15.2158012731 他们可能要花很长时间来执行指定的任务
+9.54316310009 但仍将在一定的时间内终止
+11.592932293 这类算法得出的结果常取决于输入值
+4.00773337103 二
+5.80507144754 有限的非确定算法
+6.54213765594 这类算法在有限的时间内终止
+0 然而
+10.6553055743 对于一个（或一些）给定的数值
+7.19591361604 算法的结果并不是唯一的或确定的
+4.00773337103 三
+2.48003392253 无限的算法
+9.57512777795 是那些由于没有定义终止定义条件
+12.866478516 或定义的条件无法由输入的数据满足而不终止运行的算法
+4.00773337103 通常
+9.89841235291 无限算法的产生是由于未能确定的定义终止条件

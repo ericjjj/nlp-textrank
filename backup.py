@@ -39,46 +39,36 @@ class TextRank(object):
   def abstract(self, text):
     text = re.split('，|。|\n', text.encode("utf-8"))
     text = [w for w in text if len(w)>0]
-    docs = []
-    # print '原文: \n', "\n".join(text)
+    cut = []
+    print '原文: \n', "\n".join(text)
     for item in text:
-      docs.append(preprocess(item, self.stop_words))
+      cut.append(preprocess(item, self.stop_words))
+    group = sum(cut, [])
+    scores = []
 
-    D = len(docs)
-    avgdl = 0
-    for seg in docs:
-      avgdl += len(seg)
-    avgdl /= D
-
-    f = list(range(D))
-    df = {}
-    idf = {}
-    index = 0
-    k1 = 1.5
+    k1 = 2
     b = 0.75
-    for seg in docs:
-      tf = {}
-      for word in seg:
-        freq = (1 if tf.get(word) is None else tf.get(word) + 1)
-        tf[word] = freq
-      f[index] = tf
-      for word in tf:
-        freq = (1 if df.get(word) is None else df.get(word) + 1)
-        df[word] = freq
-      index += 1
-    for word in df:
-      freq = df.get(word)
-      idf[word] = math.log(D - freq + 0.5) - math.log(freq + 0.5)
-      print word, idf[word]
-
-    for i in range(len(docs)):
-      seg = docs[i]
-      score = 0
-      for word in seg:
-        d = len(seg)
-        wf = f[i].get(word)
-        score += (idf.get(word) * wf * (k1 + 1) / (wf + k1 * (1 - b + b * d / avgdl)))
-      print score, text[i]
+    avg_dl = sum([len(item) for item in cut]) / len(cut)
+    print avg_dl
+    for d in cut:
+      idf_arr = []
+      r_arr = []
+      dl = len(d)
+      K = k1 * (1 - b + b * (dl / avg_dl))
+      s = 0
+      for qi in d:
+        n = len([item for item in group if qi == item])
+        idf = math.log(len(cut) - n + 0.5) - math.log(n + 0.5)
+        idf_arr.append(idf)
+        # print idf
+        fi = len([item for item in d if item == qi])
+        r = fi * (k1 + 1) / (fi + K)
+        s += r
+      print s, ', '.join(d)
+      # s = sum(np.array(idf_arr) * np.array(r_arr))
+      # scores.append(s)
+    # for i in range(len(text)):
+      # print scores[i], ': ', text[i]
 
     # def sim():
     #   pass
@@ -98,7 +88,7 @@ def preprocess(text, stop_words):
   text = [w for w in text if len(w)>0]
   # 去除停用词
   text = [word.strip() for word in text if word.strip() not in stop_words]
-  print ', '.join(text)
+  # print ', '.join(text)
   return text
 
 # 摘要图

@@ -11,9 +11,9 @@ except:
 import codecs
 from libs import TextRank
 
-text = codecs.open('./test/02.txt', 'r', 'utf-8').read()
+text = codecs.open('./test/03.txt', 'r', 'utf-8').read()
 w = TextRank()
-rank = w.keywords(text)
+rank = w.abstract(text)
 
-for item in rank:
-   print(item.word, item.weight)
+# for item in rank:
+   # print(item.word, item.weight)

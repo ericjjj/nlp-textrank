@@ -12,10 +12,8 @@ import codecs
 from libs import Abstract
 
 text = codecs.open('./test/03.txt', 'r', 'utf-8').read()
-w = Abstract()
-rank = w.abstract(text)
-print(rank)
-print(', '.join(rank))
 
-# for item in rank:
-   # print(item.word, item.weight)
+w = Abstract()
+rank = w.analyze(text)
+
+print(', '.join(rank))

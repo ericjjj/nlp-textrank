@@ -9,11 +9,11 @@ except:
     pass
 
 import codecs
-from libs import TextRank
+from libs import KeyWord
 
 text = codecs.open('./test/02.txt', 'r', 'utf-8').read()
-w = TextRank()
-rank = w.keywords(text)
+w = KeyWord()
+rank = w.analyze(text)
 
 for item in rank:
    print(item.word, item.weight)
